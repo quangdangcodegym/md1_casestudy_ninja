@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Ninja GO</title>
+    <script src="ninja.js"></script>
+    <script src="obstacle.js"></script>
+    <script src="background.js"></script>
+</head>
+<body>
+<canvas id="myCanvas" style="margin-left: 400px; border: solid 1px" width="600" height="700"></canvas>
+
+<button onclick="location.reload()" style="width: 100px;height: 50px">Play Again</button>
+
+<script>
+    let score = 0;
+    let canvas = document.getElementById("myCanvas");
+    let ctx = canvas.getContext("2d");
+    let background = new Background(0, 0, 600, 700, "img/forest-background.jpg");
+    background.drawBackground(ctx, score);
+
+    let ninjaGo = new Ninja(canvas.width / 5, canvas.height / 2, 100, 100, 50, "img/ninja.png");
+    ninjaGo.drawNinja(ctx);
+
+    let shuriken = new Obstacle(canvas.width, 550, 40, 40, 3, "img/shuriken2.png");
+    shuriken.drawObstacle(ctx);
+
+    let axe = new Obstacle(canvas.width, 400, 40,40,2,"img/tomahawk.png")
+    axe.drawObstacle(ctx);
+
+    let coin = new Obstacle(canvas.width, 450, 50, 50, 4, "img/coin.png");
+    coin.drawObstacle(ctx);
+
+    let coin1 = new Obstacle(canvas.width, 450, 50, 50, 3, "img/coin.png");
+    coin1.drawObstacle(ctx);
+
+    let intervalId = -1;
+    let isGameOver = false;
+    let getCoin = false;
+
+    function moveNinja(event) {
+        if (isGameOver === false) {
+            switch (event.keyCode) {
+                case 38:
+                    if (ninjaGo.y < 0) {
+                        return;
+                    }
+                    ninjaGo.moveUp();
+                    break;
+                case 39:
+                    if (ninjaGo.x + ninjaGo.width > canvas.clientWidth) {
+                        return;
+                    }
+                    ninjaGo.moveRight();
+                    break;
+                case 37:
+                    if (ninjaGo.x < 0) {
+                        return;
+                    }
+                    ninjaGo.moveLeft();
+                    break;
+                case 40:
+                    if (ninjaGo.y + ninjaGo.height > canvas.clientHeight) {
+                        return;
+                    }
+                    ninjaGo.moveDown();
+                    break;
+            }
+        }
+        if (checkCollision()) {
+            isGameOver = true;
+            ctx.font = "100px Georgia";
+            ctx.fillStyle= "red";
+            ctx.fillText("YOU DIED", 200, 350, 200);
+        }
+        if (checkCollision3()) {
+            isGameOver = true;
+            ctx.font = "100px Georgia";
+            ctx.fillStyle = "red";
+            ctx.fillText("YOU DIED", 200, 350, 200);
+        }
+        if (checkCollision2()) {
+            getCoin = true;
+            increaseScore();
+        }
+        if (checkCollision4()) {
+            getCoin = true;
+            increaseScore();
+        }
+        updateCanvas();
+    }
+
+    function moveObstacle() {
+        if (shuriken._x < 0) {
+            shuriken._x = canvas.clientWidth
+            shuriken._y = canvas.clientHeight * Math.random() ;
+        }
+        shuriken.moveLeft();
+        if (axe._x <0){
+            axe._x = canvas.clientWidth;
+            axe._y = canvas.clientHeight * Math.random();
+        }
+        axe.moveLeft();
+        if (coin._x < 0) {
+            coin._x = canvas.clientWidth;
+            coin._y = canvas.clientHeight * Math.random() ;
+        }
+        coin.moveLeft();
+        if (coin1._x < 0) {
+            coin1._x = canvas.clientWidth;
+            coin1._y = canvas.clientHeight * Math.random() ;
+        }
+        coin1.moveLeft();
+        updateCanvas();
+        if (checkCollision()) {
+            isGameOver = true;
+            ctx.font = "100px Georgia";
+            ctx.fillStyle = "red";
+            ctx.fillText("YOU DIED", 200, 350, 200);
+            cancelAnimationFrame(intervalId);
+        } else {
+            intervalId = requestAnimationFrame(moveObstacle);
+        }
+        if (checkCollision3()) {
+            isGameOver = true;
+            ctx.font = "100px Georgia";
+            ctx.fillStyle = "red";
+            ctx.fillText("YOU DIED", 200, 350, 200);
+            if (localStorage.getItem("highscore") < score){
+                localStorage.setItem("highscore",score);
+                let name = prompt("nhập tên của bạn");
+                localStorage.setItem("name", name);
+            }
+            cancelAnimationFrame(intervalId);
+        }
+        if (checkCollision2()) {
+            getCoin = true;
+            increaseScore();
+        }
+        if (checkCollision4()) {
+            getCoin = true;
+            increaseScore2();
+        }
+        speedUp();
+    }
+
+    intervalId = requestAnimationFrame(moveObstacle);
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, 600, 700);
+    }
+
+    function updateCanvas() {
+        clearCanvas();
+        background.drawBackground(ctx, score);
+        shuriken.drawObstacle(ctx);
+        axe.drawObstacle(ctx);
+        coin.drawObstacle(ctx);
+        coin1.drawObstacle(ctx);
+        ninjaGo.drawNinja(ctx);
+    }
+
+    function checkCollision() {
+        if (shuriken.y >= ninjaGo.y && shuriken.y <= ninjaGo.y + ninjaGo.height &&
+            shuriken.y + shuriken.height >= ninjaGo.y && shuriken.y + shuriken.height <= ninjaGo.y + ninjaGo.height) {
+            if (shuriken.x >= ninjaGo.x && shuriken.x <= ninjaGo.x + ninjaGo.width) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    function checkCollision2() {
+        if (coin.y >= ninjaGo.y && coin.y <= ninjaGo.y + ninjaGo.height &&
+            coin.y + coin.height >= ninjaGo.y && coin.y + coin.height <= ninjaGo.y + ninjaGo.height) {
+            if (coin.x >= ninjaGo.x && coin.x <= ninjaGo.x + ninjaGo.width) {
+                return getCoin = true;
+            }
+        }
+        return false;
+    }
+
+    function checkCollision3() {
+        if (axe.y >= ninjaGo.y && axe.y <= ninjaGo.y + ninjaGo.height &&
+            axe.y + axe.height >= ninjaGo.y && axe.y + axe.height <= ninjaGo.y + ninjaGo.height) {
+            if (axe.x >= ninjaGo.x && axe.x <= ninjaGo.x + ninjaGo.width) {
+                return true;
+            }
+        }
+        return false;
+    }
+    function checkCollision4() {
+        if (coin1.y >= ninjaGo.y && coin1.y <= ninjaGo.y + ninjaGo.height &&
+            coin1.y + coin1.height >= ninjaGo.y && coin1.y + coin1.height <= ninjaGo.y + ninjaGo.height) {
+            if (coin1.x >= ninjaGo.x && coin1.x <= ninjaGo.x + ninjaGo.width) {
+                return getCoin = true;
+            }
+        }
+        return false;
+    }
+
+    function increaseScore() {
+        if (getCoin === true) {
+            score += 1;
+            coin.x = canvas.clientWidth;
+            coin.y = Math.random()*canvas.height;
+        }
+    }
+
+    function increaseScore2(){
+        if (getCoin === true) {
+            score += 1;
+            coin1.x = canvas.clientWidth;
+            coin1.y = Math.random()*canvas.height;
+        }
+    }
+
+    function speedUp(){
+        if (score >= 10 ) {
+            shuriken._speed = shuriken._speed + 0.001;
+            axe._speed = axe._speed + 0.001;
+        } else if (score > 20) {
+            shuriken._speed = shuriken._speed + 0.05;
+            axe._speed = axe._speed + 0.05;
+        } else if (score > 30) {
+            shuriken._speed = shuriken._speed + 0.1;
+            axe._speed = axe._speed + 0.1;
+        }
+    }
+
+
+    document.addEventListener('keydown', moveNinja);
+
+
+</script>
+</body>
+</html>
